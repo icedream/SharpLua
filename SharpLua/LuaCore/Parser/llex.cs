@@ -458,6 +458,39 @@ namespace SharpLua
                                 next(ls);
                             continue;
                         }
+                    // EDIT: C-style comments from http://lua-users.org/files/wiki_insecure/power_patches/5.2/cppcomt.diff -- Icedream
+                    case '/':
+                        {  /* '/' or '/''/' (line comment) or '/''*' (long comment) */
+                            next(ls);
+                            if (ls.current == '/')
+                            {
+                                /* line comment */
+                                next(ls);
+                                while (!currIsNewline(ls) && ls.current != EOZ)
+                                    next(ls);
+                            }
+                            else if (ls.current == '*')
+                            {
+                                /* long comment */
+                                next(ls);
+                                int last = 0;
+                                while (ls.current != EOZ)
+                                {
+                                    if (last == '*' && ls.current == '/') break;
+                                    last = ls.current;
+                                    next(ls); /* skip until closing marker (or end of file) */
+                                }
+                                if (ls.current == EOZ)
+                                    luaX_lexerror(ls, "unfinished long comment", (int) RESERVED.TK_EOS);
+                                else next(ls);
+                            }
+                            else
+                            {
+                                return '/';
+                            }
+                        break;
+                    }
+                    // END EDIT
                     case '[':
                         {
                             int sep = skip_sep(ls);
