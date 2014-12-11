@@ -581,6 +581,8 @@ namespace SharpLua
  		new priority_("and", 2,2),
  		new priority_("or", 1,1),
 #if !VANILLA_LUA
+ 		new priority_("&&", 2,2),
+ 		new priority_("||", 1,1),
         new priority_(">>", 7, 7),
         new priority_("<<", 7, 7),
         new priority_("&", 7, 7),

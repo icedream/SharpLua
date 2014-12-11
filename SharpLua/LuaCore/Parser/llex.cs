@@ -96,6 +96,9 @@ namespace SharpLua
             "end", "false", "for", "function", "if",
             "in", "local", "nil", "not", "or", "repeat",
             "return", "then", "true", "until", "while",
+#if !LUA_VANILLA
+            "&&", "||", "!",
+#endif
             "..", "...", "==", ">=", "<=", "~=", 
             "<number>", "<name>", "<string>", "<eof>",
         };

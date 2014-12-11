@@ -250,6 +250,29 @@ namespace SharpLua
                         leading.Add(new Token { Type = c_ == ' ' ? TokenType.WhitespaceSpace : TokenType.WhitespaceTab, Data = c_.ToString() });
                         read();
                     }
+                    else if (c_ == '/' && peek(1) == '/')
+                    {
+                        /* c-style singleline comment */
+                        string comment = "//";
+                        while (peek() != '\n' && peek() != '\r' && peek() != '\0')
+                            comment += read();
+                        leading.Add(new Token {Type = TokenType.ShortComment, Data = comment});
+                    }
+                    else if (c_ == '/' && peek(1) == '*')
+                    {
+                        /* c-style long comment */
+                        string comment = "";
+
+                        do
+                        {
+                            while (peek() != '*')
+                                comment += read();
+                            comment += read();
+                            comment += read();
+                        } while (!comment.EndsWith("*/"));
+
+                        leading.Add(new Token {Type = TokenType.LongComment, Data = comment});
+                    }
                     else if (c_ == '-' && peek(1) == '-')
                     {
                         read();
@@ -267,19 +290,23 @@ namespace SharpLua
                             //if (peek() == '\n') // e.g. \r\n
                             //    read();
                             if (comment.Length >= 3 && comment.Substring(0, 3) == "---")
-                                leading.Add(new Token { Type = TokenType.DocumentationComment, Data = comment });
+                                leading.Add(new Token {Type = TokenType.DocumentationComment, Data = comment});
                             else
-                                leading.Add(new Token { Type = TokenType.ShortComment, Data = comment });
+                                leading.Add(new Token {Type = TokenType.ShortComment, Data = comment});
                         }
                         else
                         {
                             comment = "--" + comment;
-                            leading.Add(new Token { Type = TokenType.LongComment, Data = comment });
+                            leading.Add(new Token {Type = TokenType.LongComment, Data = comment});
                         }
                     }
                     else if (c_ == '\n' || c_ == '\r')
                     {
-                        leading.Add(new Token { Type = c_ == '\n' ? TokenType.WhitespaceN : TokenType.WhitespaceR, Data = c_.ToString() });
+                        leading.Add(new Token
+                        {
+                            Type = c_ == '\n' ? TokenType.WhitespaceN : TokenType.WhitespaceR,
+                            Data = c_.ToString()
+                        });
                         // read handles line changing...
                         read();
                     }
@@ -529,7 +556,29 @@ namespace SharpLua
                     t.Type = TokenType.Symbol;
                     t.Data = c.ToString();
 #if !VANILLA_LUA
-                    if (peek() == '=')
+                    if (peek() == c &&
+                        new[]
+                        {
+                            '&',
+                            '|'
+                        }.Contains(c))
+                    {
+                        // && or ||
+                        t.Data += c;
+                        switch (c)
+                        {
+                            case '&':
+                                t.Data = "and";
+                                t.Type = TokenType.Keyword;
+                                break;
+                            case '|':
+                                t.Data = "or";
+                                t.Type = TokenType.Keyword;
+                                break;
+                        }
+                        read();
+                    }
+                    else if (peek() == '=')
                     {
                         char c2 = peek();
                         if (c == '+' ||
@@ -564,6 +613,7 @@ namespace SharpLua
                 tokens.Add(new Token { Type = TokenType.EndOfStream });
             if (tokens.Count > 1) // 2+
                 tokens[tokens.Count - 2].FollowingEoSToken = tokens[tokens.Count - 1];
+
             return new TokenReader(tokens);
         }
     }

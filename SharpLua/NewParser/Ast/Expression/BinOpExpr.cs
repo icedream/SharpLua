@@ -27,9 +27,9 @@ namespace SharpLua.Ast.Expression
                 return BinaryOperator.Modulus;
             else if (Op == "..")
                 return BinaryOperator.Concat;
-            else if (Op == "and")
+            else if (Op == "and" || Op == "&&")
                 return BinaryOperator.And;
-            else if (Op == "or")
+            else if (Op == "or" || Op == "||")
                 return BinaryOperator.Or;
             else if (Op == "<")
                 return BinaryOperator.LessThan;
